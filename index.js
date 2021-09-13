@@ -12,6 +12,7 @@ appAxios
       colNews.find(".danh_sach_bxh").each((i, el) => {
         const url = $(el).find("a").attr("href");
         const name = $(el).find("a").text().trim();
+        console.log(`[GET LEAGUE URL]: ${url}`);
         leagues.push({
           name: name,
           url: url.toString(),
@@ -20,6 +21,7 @@ appAxios
       const teams = await getLinksTeam(leagues);
       const imageTeams = await getImagesTeam(teams);
       await download(imageTeams);
+      console.log("[COMPLETED DOWNLOAD IMAGE]");
     }
   })
   .catch((err) => console.error(err));
@@ -46,6 +48,7 @@ const getTeams = async (league) => {
     await Promise.all(
       colNews.find(".xanhbxh").each((i, el) => {
         const url = $(el).attr("href");
+        console.log(`[GET TEAM URL]: ${url}`);
         teamUrls.push(url);
       })
     );
@@ -84,15 +87,14 @@ const getImage = async (teamUrl) => {
     const response = await appAxios.get(`http://bongda.wap.vn${teamUrl}`);
     const $ = cheerio.load(response.data);
     const image = $("img.CLB_logo").attr("src");
-    console.log(`get image url: ${image}`);
+    console.log(`[GET IMAGE URL]: ${image}`);
     return image;
-  } catch (err) {
-    (err) => console.error(err);
+  } catch (error) {
+    console.log(error);
   }
 };
 
 const download = async (imageTeams) => {
-  console.log(imageTeams);
   await Promise.all(
     imageTeams.map(async (team) => {
       if (team.urls.length > 0) {
