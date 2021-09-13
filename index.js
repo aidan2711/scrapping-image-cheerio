@@ -19,10 +19,7 @@ appAxios
       });
       const teams = await getLinksTeam(leagues);
       const imageTeams = await getImagesTeam(teams);
-      console.log(imageTeams);
-
-      const status = await download(imageTeams);
-      return status;
+      await download(imageTeams);
     }
   })
   .catch((err) => console.error(err));
@@ -33,7 +30,10 @@ const getLinksTeam = async (leagues) => {
       return await getTeams(league);
     })
   );
-  return teams;
+  var filtered = teams.filter((el) => {
+    return el != null;
+  });
+  return filtered;
 };
 
 const getTeams = async (league) => {
@@ -56,23 +56,27 @@ const getTeams = async (league) => {
 };
 
 const getImagesTeam = async (teams) => {
-  const imageTeams = await Promise.all(
-    teams.map(async (team) => {
-      const images = await Promise.all(
-        team.urls.map(async (url) => await getImage(url))
-      );
-      return {
-        name: team.name,
-        urls: images,
-      };
-    })
-  );
-  console.log(imageTeams)
-
-  var filtered = imageTeams.filter((el) => {
-    return el != null;
-  });
-  return filtered;
+  try {
+    const imageTeams = await Promise.all(
+      teams.map(async (team) => {
+        const images = await Promise.all(
+          team.urls.map(async (url) => {
+            return await getImage(url);
+          })
+        );
+        return {
+          name: team.name,
+          urls: images,
+        };
+      })
+    );
+    var filtered = imageTeams.filter((el) => {
+      return el != null;
+    });
+    return filtered;
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const getImage = async (teamUrl) => {
@@ -80,6 +84,7 @@ const getImage = async (teamUrl) => {
     const response = await appAxios.get(`http://bongda.wap.vn${teamUrl}`);
     const $ = cheerio.load(response.data);
     const image = $("img.CLB_logo").attr("src");
+    console.log(`get image url: ${image}`);
     return image;
   } catch (err) {
     (err) => console.error(err);
@@ -87,26 +92,18 @@ const getImage = async (teamUrl) => {
 };
 
 const download = async (imageTeams) => {
-  try {
-    await Promise.all(
-      imageTeams.map(async (team) => {
-        if (team.urls.length > 0) {
-          await Promise.all(
-            team.urls.map(async (url) => {
-              if (url) await downloadImage(url);
-            })
-          );
-        }
-      })
-    );
-    return {
-      message: "download success",
-      status: 200,
-    };
-  } catch (error) {
-    return {
-      message: error.message,
-      status: 400,
-    };
-  }
+  console.log(imageTeams);
+  await Promise.all(
+    imageTeams.map(async (team) => {
+      if (team.urls.length > 0) {
+        await Promise.all(
+          team.urls.map(async (url) => {
+            if (url) {
+              await downloadImage(url);
+            }
+          })
+        );
+      }
+    })
+  );
 };

@@ -9,24 +9,31 @@ module.exports = {
       ""
     );
     const folder = removeLink.substring(0, removeLink.indexOf("/"));
-    console.log(url);
-    await appAxios({
-      url,
-      responseType: "stream",
-    }).then((response) => {
-      if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder);
-      }
-      if (fs.existsSync(`${folder}/${imageName}`)) {
-        new Promise((resolve, reject) => resolve());
-      }
-      new Promise((resolve, reject) => {
-        response.data
-          .pipe(fs.createWriteStream(`${dir}/${image}`))
-          .on("finish", () => resolve())
-          .on("error", (e) => reject(e));
+    console.log(`${imageName} downloading`);
+    try {
+      await appAxios({
+        url,
+        responseType: "stream",
+      }).then((response) => {
+        if (!fs.existsSync(folder)) {
+          fs.mkdirSync(folder);
+        }
+        if (fs.existsSync(`${folder}/${imageName}`)) {
+          new Promise((resolve, reject) => resolve());
+        }
+        new Promise((resolve, reject) => {
+          response.data
+            .pipe(fs.createWriteStream(`${folder}/${imageName}`))
+            .on("finish", () => {
+              resolve();
+              console.log(`${imageName} downloaded`);
+            })
+            .on("error", (e) => reject(e));
+        });
       });
-    });
+    } catch (error) {
+      console.log(error);
+    }
   },
 
   // async downloadImage(url, dir, image) {
